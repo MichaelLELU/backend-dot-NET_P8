@@ -6,6 +6,7 @@ using TourGuide.LibrairiesWrappers.Interfaces;
 using TourGuide.Services.Interfaces;
 using TourGuide.Users;
 using TourGuide.Utilities;
+using TourGuide.Models;
 using TripPricer;
 
 namespace TourGuide.Services;
@@ -103,6 +104,37 @@ public class TourGuideService : ITourGuideService
     private void AddShutDownHook()
     {
         AppDomain.CurrentDomain.ProcessExit += (sender, e) => Tracker.StopTracking();
+    }
+
+    public List<NearbyAttractionDTO> GetNearbyAttractions(User user)
+    {
+        var visitedLocation = GetUserLocation(user);
+        var attractions = _gpsUtil.GetAttractions();
+
+        return attractions
+            .Select(attraction =>
+            {
+                double distance = _rewardsService.GetDistance(
+                    visitedLocation.Location,
+                    attraction);
+
+                return new NearbyAttractionDTO
+                {
+                    AttractionName = attraction.AttractionName,
+                    AttractionLatitude = attraction.Latitude,
+                    AttractionLongitude = attraction.Longitude,
+
+                    UserLatitude = visitedLocation.Location.Latitude,
+                    UserLongitude = visitedLocation.Location.Longitude,
+
+                    Distance = distance,
+
+                    RewardPoints = 0 // temporaire
+                };
+            })
+            .OrderBy(x => x.Distance)
+            .Take(5)
+            .ToList();
     }
 
     /**********************************************************************************

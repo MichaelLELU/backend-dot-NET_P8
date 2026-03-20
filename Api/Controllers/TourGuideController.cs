@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TourGuide.Services.Interfaces;
 using TourGuide.Users;
+using TourGuide.Models;
 using TripPricer;
 
 namespace TourGuide.Controllers;
@@ -34,11 +35,12 @@ public class TourGuideController : ControllerBase
     // The reward points for visiting each Attraction.
     //    Note: Attraction reward points can be gathered from RewardsCentral
     [HttpGet("getNearbyAttractions")]
-    public ActionResult<List<Attraction>> GetNearbyAttractions([FromQuery] string userName)
+    public ActionResult<List<NearbyAttractionDTO>> GetNearbyAttractions([FromQuery] string userName)
     {
-        var visitedLocation = _tourGuideService.GetUserLocation(GetUser(userName));
-        var attractions = _tourGuideService.GetNearByAttractions(visitedLocation);
-        return Ok(attractions);
+        var user = GetUser(userName);
+        var result = _tourGuideService.GetNearbyAttractions(user);
+
+        return Ok(result);
     }
 
     [HttpGet("getRewards")]
