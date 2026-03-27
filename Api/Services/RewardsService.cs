@@ -1,4 +1,6 @@
-﻿using GpsUtil.Location;
+﻿using GpsUtil;
+using GpsUtil.Location;
+using System.Collections.Concurrent;
 using TourGuide.LibrairiesWrappers.Interfaces;
 using TourGuide.Services.Interfaces;
 using TourGuide.Users;
@@ -32,28 +34,48 @@ public class RewardsService : IRewardsService
         _proximityBuffer = _defaultProximityBuffer;
     }
 
-    public void CalculateRewards(User user)
-    {
-        count++;
-        List<VisitedLocation> userLocations = user.VisitedLocations;
-        List<Attraction> attractions = _gpsUtil.GetAttractions();
 
-        foreach (var visitedLocation in userLocations)
+
+public void CalculateRewards(User user)
+    {
+        var attractions = _gpsUtil.GetAttractions();
+
+        var rewardedAttractions = user.UserRewards
+            .Select(r => r.Attraction.AttractionName)
+            .ToHashSet();
+
+        var visitedLocations = user.VisitedLocations.ToList();
+
+        var newRewards = new ConcurrentBag<UserReward>();
+
+        foreach (var visitedLocation in visitedLocations)
         {
-            foreach (var attraction in attractions)
+            Parallel.ForEach(attractions, attraction =>
             {
-                if (!user.UserRewards.Any(r => r.Attraction.AttractionName == attraction.AttractionName))
+                if (rewardedAttractions.Contains(attraction.AttractionName))
+                    return;
+
+                if (NearAttraction(visitedLocation, attraction))
                 {
-                    if (NearAttraction(visitedLocation, attraction))
-                    {
-                        user.AddUserReward(new UserReward(visitedLocation, attraction, GetRewardPoints(attraction, user)));
-                    }
+                    var reward = new UserReward(
+                        visitedLocation,
+                        attraction,
+                        GetRewardPoints(attraction, user)
+                    );
+
+                    newRewards.Add(reward);
                 }
-            }
+            });
+        }
+
+        foreach (var reward in newRewards)
+        {
+            user.AddUserReward(reward);
         }
     }
 
-    public bool IsWithinAttractionProximity(Attraction attraction, Locations location)
+
+public bool IsWithinAttractionProximity(Attraction attraction, Locations location)
     {
         Console.WriteLine(GetDistance(attraction, location));
         return GetDistance(attraction, location) <= _attractionProximityRange;
