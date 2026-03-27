@@ -129,7 +129,7 @@ public class TourGuideService : ITourGuideService
 
                     Distance = distance,
 
-                    RewardPoints = 0 // temporaire
+                    RewardPoints = _rewardsService.GetRewardPoints(attraction, user)
                 };
             })
             .OrderBy(x => x.Distance)
