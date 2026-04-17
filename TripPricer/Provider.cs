@@ -8,14 +8,14 @@ namespace TripPricer;
 
 public class Provider
 {
-    public readonly string Name;
-    public readonly double Price;
-    public readonly Guid TripId;
+    public string Name { get; }
+    public double Price { get; }
+    public Guid TripId { get; }
 
     public Provider(Guid tripId, string name, double price)
     {
-        this.Name = name;
-        this.TripId = tripId;
-        this.Price = price;
+        Name = name;
+        TripId = tripId;
+        Price = price;
     }
 }
