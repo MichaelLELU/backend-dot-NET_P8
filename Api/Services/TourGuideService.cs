@@ -1,6 +1,7 @@
 ﻿using GpsUtil.Location;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Collections.Concurrent;
 using System.Globalization;
 using TourGuide.LibrairiesWrappers.Interfaces;
 using TourGuide.Services.Interfaces;
@@ -18,7 +19,7 @@ public class TourGuideService : ITourGuideService
     private readonly IRewardsService _rewardsService;
     private readonly TripPricer.TripPricer _tripPricer;
     public Tracker Tracker { get; private set; }
-    private readonly Dictionary<string, User> _internalUserMap = new();
+    private readonly ConcurrentDictionary<string, User> _internalUserMap = new();
     private const string TripPricerApiKey = "test-server-api-key";
     private bool _testMode = true;
 
@@ -57,7 +58,8 @@ public class TourGuideService : ITourGuideService
 
     public User GetUser(string userName)
     {
-        return _internalUserMap.ContainsKey(userName) ? _internalUserMap[userName] : null;
+        _internalUserMap.TryGetValue(userName, out var user);
+        return user;
     }
 
     public List<User> GetAllUsers()
@@ -67,10 +69,7 @@ public class TourGuideService : ITourGuideService
 
     public void AddUser(User user)
     {
-        if (!_internalUserMap.ContainsKey(user.UserName))
-        {
-            _internalUserMap.Add(user.UserName, user);
-        }
+        _internalUserMap.TryAdd(user.UserName, user);
     }
 
     public List<Provider> GetTripDeals(User user)
@@ -91,7 +90,15 @@ public class TourGuideService : ITourGuideService
         return visitedLocation;
     }
 
-    public List<Attraction> GetNearByAttractions(VisitedLocation visitedLocation)
+    public void TrackUsersLocations(List<User> users)
+    {
+        Parallel.ForEach(users, user =>
+        {
+            TrackUserLocation(user);
+        });
+    }
+
+    public List<Attraction> GetClosestAttractions(VisitedLocation visitedLocation)
     {
         return _gpsUtil.GetAttractions()
             .OrderBy(a => _rewardsService.GetDistance(
@@ -109,32 +116,21 @@ public class TourGuideService : ITourGuideService
     public List<NearbyAttractionDTO> GetNearbyAttractions(User user)
     {
         var visitedLocation = GetUserLocation(user);
-        var attractions = _gpsUtil.GetAttractions();
 
-        return attractions
-            .Select(attraction =>
-            {
-                double distance = _rewardsService.GetDistance(
-                    visitedLocation.Location,
-                    attraction);
+        var attractions = GetClosestAttractions(visitedLocation);
 
-                return new NearbyAttractionDTO
-                {
-                    AttractionName = attraction.AttractionName,
-                    AttractionLatitude = attraction.Latitude,
-                    AttractionLongitude = attraction.Longitude,
+        return attractions.Select(attraction => new NearbyAttractionDTO
+        {
+            AttractionName = attraction.AttractionName,
+            AttractionLatitude = attraction.Latitude,
+            AttractionLongitude = attraction.Longitude,
 
-                    UserLatitude = visitedLocation.Location.Latitude,
-                    UserLongitude = visitedLocation.Location.Longitude,
+            UserLatitude = visitedLocation.Location.Latitude,
+            UserLongitude = visitedLocation.Location.Longitude,
 
-                    Distance = distance,
-
-                    RewardPoints = _rewardsService.GetRewardPoints(attraction, user)
-                };
-            })
-            .OrderBy(x => x.Distance)
-            .Take(5)
-            .ToList();
+            Distance = _rewardsService.GetDistance(visitedLocation.Location, attraction),
+            RewardPoints = _rewardsService.GetRewardPoints(attraction, user)
+        }).ToList();
     }
 
     /**********************************************************************************
@@ -150,7 +146,7 @@ public class TourGuideService : ITourGuideService
             var userName = $"internalUser{i}";
             var user = new User(Guid.NewGuid(), userName, "000", $"{userName}@tourGuide.com");
             GenerateUserLocationHistory(user);
-            _internalUserMap.Add(userName, user);
+            _internalUserMap.TryAdd(userName, user);
         }
 
         _logger.LogDebug($"Created {InternalTestHelper.GetInternalUserNumber()} internal test users.");

@@ -5,6 +5,8 @@ namespace TourGuide.Users;
 
 public class User
 {
+    private readonly object _lock = new object();
+
     public Guid UserId { get; }
     public string UserName { get; }
     public string PhoneNumber { get; set; }
@@ -25,24 +27,36 @@ public class User
 
     public void AddToVisitedLocations(VisitedLocation visitedLocation)
     {
-        VisitedLocations.Add(visitedLocation);
+        lock (_lock)
+        {
+            VisitedLocations.Add(visitedLocation);
+        }
     }
 
     public void ClearVisitedLocations()
     {
-        VisitedLocations.Clear();
+        lock (_lock)
+        {
+            VisitedLocations.Clear();
+        }
     }
 
     public void AddUserReward(UserReward userReward)
     {
-        if (!UserRewards.Exists(r => r.Attraction.AttractionName == userReward.Attraction.AttractionName))
+        lock (_lock)
         {
-            UserRewards.Add(userReward);
+            if (!UserRewards.Any(r => r.Attraction.AttractionName == userReward.Attraction.AttractionName))
+            {
+                UserRewards.Add(userReward);
+            }
         }
     }
 
     public VisitedLocation GetLastVisitedLocation()
     {
-        return VisitedLocations[^1];
+        lock (_lock)
+        {
+            return VisitedLocations[^1];
+        }
     }
 }

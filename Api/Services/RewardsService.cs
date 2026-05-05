@@ -36,26 +36,29 @@ public class RewardsService : IRewardsService
 
 
 
-public void CalculateRewards(User user)
+    public void CalculateRewards(User user)
     {
         var attractions = _gpsUtil.GetAttractions();
-
-        var rewardedAttractions = user.UserRewards
-            .Select(r => r.Attraction.AttractionName)
-            .ToHashSet();
-
         var visitedLocations = user.VisitedLocations.ToList();
 
-        var newRewards = new ConcurrentBag<UserReward>();
+        var rewardedAttractions = new ConcurrentDictionary<string, bool>();
 
-        foreach (var visitedLocation in visitedLocations)
+        foreach (var reward in user.UserRewards)
         {
-            Parallel.ForEach(attractions, attraction =>
-            {
-                if (rewardedAttractions.Contains(attraction.AttractionName))
-                    return;
+            rewardedAttractions.TryAdd(reward.Attraction.AttractionName, true);
+        }
 
-                if (NearAttraction(visitedLocation, attraction))
+        Parallel.ForEach(visitedLocations, visitedLocation =>
+        {
+            foreach (var attraction in attractions)
+            {
+                if (rewardedAttractions.ContainsKey(attraction.AttractionName))
+                    continue;
+
+                if (!NearAttraction(visitedLocation, attraction))
+                    continue;
+
+                if (rewardedAttractions.TryAdd(attraction.AttractionName, true))
                 {
                     var reward = new UserReward(
                         visitedLocation,
@@ -63,19 +66,14 @@ public void CalculateRewards(User user)
                         GetRewardPoints(attraction, user)
                     );
 
-                    newRewards.Add(reward);
+                    user.AddUserReward(reward);
                 }
-            });
-        }
-
-        foreach (var reward in newRewards)
-        {
-            user.AddUserReward(reward);
-        }
+            }
+        });
     }
 
 
-public bool IsWithinAttractionProximity(Attraction attraction, Locations location)
+    public bool IsWithinAttractionProximity(Attraction attraction, Locations location)
     {
         Console.WriteLine(GetDistance(attraction, location));
         return GetDistance(attraction, location) <= _attractionProximityRange;
