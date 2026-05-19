@@ -44,7 +44,12 @@ public class RewardsService : IRewardsService
             .Select(r => r.Attraction.AttractionName)
             .ToHashSet();
 
-        var visitedLocations = user.VisitedLocations.ToList();
+        List<VisitedLocation> visitedLocations;
+
+        lock (user.VisitedLocations)
+        {
+            visitedLocations = user.VisitedLocations.ToList();
+        }
 
         foreach (var visitedLocation in visitedLocations)
         {
