@@ -85,9 +85,18 @@ public class TourGuideService : ITourGuideService
 
     public VisitedLocation TrackUserLocation(User user)
     {
+        //Stopwatch sw = Stopwatch.StartNew();
+
         VisitedLocation visitedLocation = _gpsUtil.GetUserLocation(user.UserId);
+
+        //Console.WriteLine($"GPS: {sw.ElapsedMilliseconds} ms");
+        //sw.Restart();
+
         user.AddToVisitedLocations(visitedLocation);
         _rewardsService.CalculateRewards(user);
+
+        //Console.WriteLine($"Rewards: {sw.ElapsedMilliseconds} ms");
+
         return visitedLocation;
     }
 
