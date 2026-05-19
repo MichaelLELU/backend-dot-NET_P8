@@ -36,7 +36,7 @@ public class RewardsService : IRewardsService
 
 
 
-public void CalculateRewards(User user)
+    public void CalculateRewards(User user)
     {
         var attractions = _gpsUtil.GetAttractions();
 
@@ -45,8 +45,6 @@ public void CalculateRewards(User user)
             .ToHashSet();
 
         var visitedLocations = user.VisitedLocations.ToList();
-
-        var newRewards = new ConcurrentBag<UserReward>();
 
         foreach (var visitedLocation in visitedLocations)
         {
@@ -63,19 +61,17 @@ public void CalculateRewards(User user)
                         GetRewardPoints(attraction, user)
                     );
 
-                    newRewards.Add(reward);
+                    lock (user.UserRewards)
+                    {
+                        user.AddUserReward(reward);
+                    }
                 }
             });
-        }
-
-        foreach (var reward in newRewards)
-        {
-            user.AddUserReward(reward);
         }
     }
 
 
-public bool IsWithinAttractionProximity(Attraction attraction, Locations location)
+    public bool IsWithinAttractionProximity(Attraction attraction, Locations location)
     {
         Console.WriteLine(GetDistance(attraction, location));
         return GetDistance(attraction, location) <= _attractionProximityRange;
