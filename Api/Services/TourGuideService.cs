@@ -109,7 +109,8 @@ public class TourGuideService : ITourGuideService
     public List<NearbyAttractionDTO> GetNearbyAttractions(User user)
     {
         var visitedLocation = GetUserLocation(user);
-        var attractions = _gpsUtil.GetAttractions();
+
+        var attractions = GetNearByAttractions(visitedLocation);
 
         return attractions
             .Select(attraction =>
@@ -132,8 +133,6 @@ public class TourGuideService : ITourGuideService
                     RewardPoints = _rewardsService.GetRewardPoints(attraction, user)
                 };
             })
-            .OrderBy(x => x.Distance)
-            .Take(5)
             .ToList();
     }
 
