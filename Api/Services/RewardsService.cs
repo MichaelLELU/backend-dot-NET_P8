@@ -1,6 +1,7 @@
 ﻿using GpsUtil;
 using GpsUtil.Location;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using TourGuide.LibrairiesWrappers.Interfaces;
 using TourGuide.Services.Interfaces;
 using TourGuide.Users;
@@ -39,10 +40,15 @@ public class RewardsService : IRewardsService
     public void CalculateRewards(User user)
     {
         var attractions = _gpsUtil.GetAttractions();
+        var rewardedAttractions = new ConcurrentDictionary<string, byte>();
 
-        var rewardedAttractions = user.UserRewards
-            .Select(r => r.Attraction.AttractionName)
-            .ToHashSet();
+        foreach (var reward in user.UserRewards)
+        {
+            rewardedAttractions.TryAdd(
+                reward.Attraction.AttractionName,
+                0
+            );
+        }
 
         List<VisitedLocation> visitedLocations;
 
@@ -55,21 +61,34 @@ public class RewardsService : IRewardsService
         {
             Parallel.ForEach(attractions, attraction =>
             {
-                if (rewardedAttractions.Contains(attraction.AttractionName))
-                    return;
-
-                if (NearAttraction(visitedLocation, attraction))
+                if (!NearAttraction(visitedLocation, attraction))
                 {
-                    var reward = new UserReward(
-                        visitedLocation,
-                        attraction,
-                        GetRewardPoints(attraction, user)
-                    );
+                    return;
+                }
 
-                    lock (user.UserRewards)
-                    {
-                        user.AddUserReward(reward);
-                    }
+                if (!rewardedAttractions.TryAdd(
+                        attraction.AttractionName,
+                        0))
+                {
+                    return;
+                }
+
+                Stopwatch swRewardPoints = Stopwatch.StartNew();
+
+                var rewardPoints = GetRewardPoints(attraction, user);
+
+                Console.WriteLine(
+                    $"RewardCentral: {swRewardPoints.ElapsedMilliseconds} ms");
+
+                var reward = new UserReward(
+                    visitedLocation,
+                    attraction,
+                    rewardPoints
+                );
+
+                lock (user.UserRewards)
+                {
+                    user.AddUserReward(reward);
                 }
             });
         }
