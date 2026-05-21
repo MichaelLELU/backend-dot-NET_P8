@@ -91,8 +91,7 @@ namespace TourGuideTest
 
             var tasks = allUsers
                 .Select(user =>
-                    Task.Run(() =>
-                        _fixture.RewardsService.CalculateRewards(user)))
+                    _fixture.RewardsService.CalculateRewardsAsync(user))
                 .ToArray();
 
             await Task.WhenAll(tasks);

@@ -13,6 +13,7 @@ public class User
     public DateTime LatestLocationTimestamp { get; set; }
     public ConcurrentStack<VisitedLocation> VisitedLocations { get; } = new();
     public List<UserReward> UserRewards { get; } = new List<UserReward>();
+    public object UserRewardsLock { get; } = new();
     public UserPreferences UserPreferences { get; set; } = new UserPreferences();
     public List<Provider> TripDeals { get; set; } = new List<Provider>();
 
