@@ -1,6 +1,7 @@
 ﻿using GpsUtil;
 using GpsUtil.Location;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using TourGuide.LibrairiesWrappers.Interfaces;
 using TourGuide.Services.Interfaces;
 using TourGuide.Users;
@@ -15,7 +16,6 @@ public class RewardsService : IRewardsService
     private readonly int _attractionProximityRange = 200;
     private readonly IGpsUtil _gpsUtil;
     private readonly IRewardCentral _rewardsCentral;
-    private static int count = 0;
 
     public RewardsService(IGpsUtil gpsUtil, IRewardCentral rewardCentral)
     {
@@ -39,46 +39,79 @@ public class RewardsService : IRewardsService
     public void CalculateRewards(User user)
     {
         var attractions = _gpsUtil.GetAttractions();
+        var rewardedAttractions = new ConcurrentDictionary<string, byte>();
 
-        var rewardedAttractions = user.UserRewards
-            .Select(r => r.Attraction.AttractionName)
-            .ToHashSet();
+        List<UserReward> existingRewards;
 
-        List<VisitedLocation> visitedLocations;
-
-        lock (user.VisitedLocations)
+        lock (user.UserRewardsLock)
         {
-            visitedLocations = user.VisitedLocations.ToList();
+            existingRewards = user.UserRewards.ToList();
         }
+
+        foreach (var reward in existingRewards)
+        {
+            rewardedAttractions.TryAdd(
+                reward.Attraction.AttractionName,
+                0);
+        }
+
+        var visitedLocations = user.VisitedLocations.ToList();
 
         foreach (var visitedLocation in visitedLocations)
         {
-            Parallel.ForEach(attractions, attraction =>
-            {
-                if (rewardedAttractions.Contains(attraction.AttractionName))
-                    return;
-
-                if (NearAttraction(visitedLocation, attraction))
+            Parallel.ForEach(
+                attractions,
+                new ParallelOptions
                 {
-                    var reward = new UserReward(
-                        visitedLocation,
-                        attraction,
-                        GetRewardPoints(attraction, user)
-                    );
+                    MaxDegreeOfParallelism = Environment.ProcessorCount
+                },
+                attraction =>
+                {
+                if (!NearAttraction(visitedLocation, attraction))
+                {
+                    return;
+                }
 
-                    lock (user.UserRewards)
+                if (!rewardedAttractions.TryAdd(
+                        attraction.AttractionName,
+                        0))
+                {
+                    return;
+                }
+
+                //Stopwatch swRewardPoints = Stopwatch.StartNew();
+
+                var rewardPoints = GetRewardPoints(attraction, user);
+
+                //Console.WriteLine(
+                //    $"RewardCentral: {swRewardPoints.ElapsedMilliseconds} ms");
+
+                var reward = new UserReward(
+                    visitedLocation,
+                    attraction,
+                    rewardPoints
+                );
+
+                    lock (user.UserRewardsLock)
                     {
-                        user.AddUserReward(reward);
-                    }
+                    user.AddUserReward(reward);
                 }
             });
         }
     }
 
+    public async Task CalculateRewardsAsync(User user)
+    {
+        await Task.Run(() =>
+        {
+            CalculateRewards(user);
+        });
+    }
+
 
     public bool IsWithinAttractionProximity(Attraction attraction, Locations location)
     {
-        Console.WriteLine(GetDistance(attraction, location));
+        //Console.WriteLine(GetDistance(attraction, location));
         return GetDistance(attraction, location) <= _attractionProximityRange;
     }
 

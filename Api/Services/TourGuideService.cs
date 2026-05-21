@@ -100,6 +100,11 @@ public class TourGuideService : ITourGuideService
         return visitedLocation;
     }
 
+    public async Task<VisitedLocation> TrackUserLocationAsync(User user)
+    {
+        return await Task.Run(() => TrackUserLocation(user));
+    }
+
     public List<Attraction> GetNearByAttractions(VisitedLocation visitedLocation)
     {
         return _gpsUtil.GetAttractions()
