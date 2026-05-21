@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.3.11505.172 d18.3
+VisualStudioVersion = 18.3.11505.172
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TourGuide", "Api\TourGuide.csproj", "{2B1DFAF3-2163-47EA-8380-91F75D176A87}"
 EndProject
@@ -17,7 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F873
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{25B45768-27A8-4BB8-B605-C5E1F6DB6C8C}"
 	ProjectSection(SolutionItems) = preProject
-		dotnet-ci.yml = dotnet-ci.yml
+		.github\workflows\dotnet-ci.yml = .github\workflows\dotnet-ci.yml
 	EndProjectSection
 EndProject
 Global

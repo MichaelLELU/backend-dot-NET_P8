@@ -1,38 +1,31 @@
 name: .NET CI
-
-on:
-push:
-branches:
-- master
-
-pull_request:
-branches:
-- master
-
+'on':
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+    - master
 jobs:
-build-and-test:
-runs-on: ubuntu-latest
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      CI_USER_COUNT: 1000
 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-env:
-  CI_USER_COUNT: 1000
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 7.0.x
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+      - name: Restore dependencies
+        run: dotnet restore
 
-  - name: Setup .NET
-    uses: actions/setup-dotnet@v4
-    with:
-      dotnet-version: 7.0.x
+      - name: Build solution
+        run: dotnet build --configuration Release --no-restore
 
-  - name: Restore dependencies
-    run: dotnet restore
-
-  - name: Build solution
-    run: dotnet build --configuration Release --no-restore
-
-  - name: Run tests
-    run: dotnet test --configuration Release --no-build --filter "Category!=Performance" 
-    # je peut retirer --filter "Category!=Performance"  pour les tests de performance si je veux les inclure
-
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --filter "Category!=Performance"
