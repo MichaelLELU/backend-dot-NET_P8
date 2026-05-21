@@ -44,11 +44,24 @@ namespace TourGuideTest
             _output = output;
         }
 
+        private static int GetUserCount()
+        {
+            var ciValue = Environment.GetEnvironmentVariable("CI_USER_COUNT");
+
+            if (int.TryParse(ciValue, out int result))
+            {
+                return result;
+            }
+
+            return 100000;
+        }
+
+        [Trait("Category", "Performance")]
         [Fact]
         public async Task HighVolumeTrackLocation()
         {
             //On peut ici augmenter le nombre d'utilisateurs pour tester les performances
-            _fixture.Initialize(100000);
+            _fixture.Initialize(GetUserCount());
 
             List<User> allUsers = _fixture.TourGuideService.GetAllUsers();
 
@@ -65,16 +78,17 @@ namespace TourGuideTest
             stopWatch.Stop();
             _fixture.TourGuideService.Tracker.StopTracking();
 
-            _output.WriteLine($"highVolumeTrackLocation: Time Elapsed: {stopWatch.Elapsed.TotalSeconds} seconds.");
+            _output.WriteLine($"highVolumeTrackLocation: users {GetUserCount()}, Time Elapsed: {stopWatch.Elapsed.TotalSeconds} seconds.");
 
             Assert.True(TimeSpan.FromMinutes(15).TotalSeconds >= stopWatch.Elapsed.TotalSeconds);
         }
 
+        [Trait("Category", "Performance")]
         [Fact]
         public async Task HighVolumeGetRewards()
         {
             //On peut ici augmenter le nombre d'utilisateurs pour tester les performances
-            _fixture.Initialize(100000);
+            _fixture.Initialize(GetUserCount());
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -104,7 +118,7 @@ namespace TourGuideTest
             stopWatch.Stop();
             _fixture.TourGuideService.Tracker.StopTracking();
 
-            _output.WriteLine($"highVolumeGetRewards: Time Elapsed: {stopWatch.Elapsed.TotalSeconds} seconds.");
+            _output.WriteLine($"highVolumeGetRewards: users {GetUserCount()} Time Elapsed: {stopWatch.Elapsed.TotalSeconds} seconds.");
 
             Assert.True(TimeSpan.FromMinutes(20).TotalSeconds >= stopWatch.Elapsed.TotalSeconds);
         }

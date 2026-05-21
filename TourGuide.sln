@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.7.34003.232
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11505.172 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TourGuide", "Api\TourGuide.csproj", "{2B1DFAF3-2163-47EA-8380-91F75D176A87}"
 EndProject
@@ -12,6 +12,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RewardCentral", "RewardCentral\RewardCentral.csproj", "{BD57952C-1E33-4043-AB44-6EAB7048464A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TourGuideTest", "TourGuideTest\TourGuideTest.csproj", "{690EAAD6-5B9B-4052-8C67-8592AD1CE1AB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F873937D-F44E-4187-947C-BF42B0946CEF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{25B45768-27A8-4BB8-B605-C5E1F6DB6C8C}"
+	ProjectSection(SolutionItems) = preProject
+		dotnet-ci.yml = dotnet-ci.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,6 +49,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{25B45768-27A8-4BB8-B605-C5E1F6DB6C8C} = {F873937D-F44E-4187-947C-BF42B0946CEF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A26CBEC0-6AC7-4E60-B08D-F18852351E62}
