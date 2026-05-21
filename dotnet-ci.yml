@@ -29,4 +29,3 @@ jobs:
 
       - name: Run tests
         run: dotnet test --configuration Release --no-build --filter "Category!=Performance"
-        # je peut retirer "--filter "Category!=Performance"" pour les tests de performance si je veux les inclure dans la CI
