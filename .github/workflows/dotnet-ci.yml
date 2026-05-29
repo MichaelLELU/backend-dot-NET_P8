@@ -30,3 +30,14 @@ jobs:
       - name: Run tests
         run: dotnet test --configuration Release --no-build --filter "Category!=Performance"
         # retirer "--filter "Category=Performance" pour exécuter les tests de performance sur 1000 users
+      - name: Publish application
+        run: dotnet publish TourGuide/TourGuide.csproj -c Release -o publish
+
+      - name: Create ZIP archive
+        run: zip -r tourguide-release.zip publish
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tourguide-build
+          path: tourguide-release.zip

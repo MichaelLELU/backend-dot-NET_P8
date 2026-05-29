@@ -54,13 +54,13 @@ namespace TourGuideTest
             }
 
             return 100000;
+            //On peut ici augmenter le nombre d'utilisateurs pour tester les performances
         }
 
         [Trait("Category", "Performance")]
         [Fact]
         public async Task HighVolumeTrackLocation()
         {
-            //On peut ici augmenter le nombre d'utilisateurs pour tester les performances
             _fixture.Initialize(GetUserCount());
 
             List<User> allUsers = _fixture.TourGuideService.GetAllUsers();
@@ -87,7 +87,6 @@ namespace TourGuideTest
         [Fact]
         public async Task HighVolumeGetRewards()
         {
-            //On peut ici augmenter le nombre d'utilisateurs pour tester les performances
             _fixture.Initialize(GetUserCount());
 
             Stopwatch stopWatch = new Stopwatch();
