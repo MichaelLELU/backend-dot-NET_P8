@@ -31,7 +31,7 @@ jobs:
         run: dotnet test --configuration Release --no-build --filter "Category!=Performance"
         # retirer "--filter "Category=Performance" pour exécuter les tests de performance sur 1000 users
       - name: Publish application
-        run: dotnet publish backend-dot-NET_P8/TourGuide.csproj -c Release -o publish
+        run: dotnet publish ../../TourGuide.csproj -c Release -o publish
 
       - name: Create ZIP archive
         run: zip -r tourguide-release.zip publish
